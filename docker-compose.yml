@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+  registry:
+    image: registry:2
+    restart: always
+    ports:
+      - 443:443
+    volumes:
+      - registry_data:/var/lib/registry
+      - registry_certs:/certs
+      - ./config.yml:/etc/docker/registry/config.yml
+    environment:
+      - REGISTRY_HTTP_ADDR=0.0.0.0:443
+      - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry.crt
+      - REGISTRY_HTTP_TLS_KEY=/certs/registry.key
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+
+  registry-ui:
+    image: joxit/docker-registry-ui:main
+    restart: always
+    ports:
+      - 80:80
+    environment:
+      - SINGLE_REGISTRY=true
+      - REGISTRY_TITLE= ** Your Registry Title (e.g. Private Docker Registry)**
+      - DELETE_IMAGES=true
+      - SHOW_CONTENT_DIGEST=true
+      - REGISTRY_URL= ** Your registry DNS (e.g. https://dockerregistry.example.com ) **
+      - NGINX_PROXY_PASS_URL= ** Your registry DNS (e.g. https://dockerregistry.example.com ) **
+      - SHOW_CATALOG_NB_TAGS=true
+      - CATALOG_MIN_BRANCHES=1
+      - CATALOG_MAX_BRANCHES=1
+      - TAGLIST_PAGE_SIZE=100
+      - REGISTRY_SECURED=false
+      - CATALOG_ELEMENTS_LIMIT=1000
+    depends_on:
+      - registry
+
+volumes:
+
+  registry_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/registry_data
+
+  registry_certs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/registry_certs
